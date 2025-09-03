@@ -3,47 +3,49 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Page;
 use Illuminate\Http\Request;
 
 class PageController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $query = Page::query();
+
+        if ($search = $request->get('search')) {
+            $query->where('title', 'like', "%{$search}%");
+        }
+
+        return response()->json($query->paginate(10));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'title' => 'required|string',
+            'content' => 'required|string',
+        ]);
+
+        $page = Page::create($validated);
+
+        return response()->json(['message' => 'Page created', 'page' => $page]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function update(Request $request, Page $page)
     {
-        //
+        $validated = $request->validate([
+            'title' => 'required|string',
+            'content' => 'required|string',
+        ]);
+
+        $page->update($validated);
+
+        return response()->json(['message' => 'Page updated', 'page' => $page]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy(Page $page)
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $page->delete();
+        return response()->json(['message' => 'Page deleted']);
     }
 }

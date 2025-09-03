@@ -2,44 +2,69 @@
   <AppLayout>
     <h2 class="text-2xl font-bold mb-4">Manage Users</h2>
 
-    <!-- Add User Form -->
-    <form @submit.prevent="saveUser" class="mb-6 bg-gray-100 p-4 rounded">
-      <input v-model="form.name" type="text" placeholder="Name" class="border p-2 mr-2" />
-      <input v-model="form.email" type="email" placeholder="Email" class="border p-2 mr-2" />
-      <input v-model="form.password" type="password" placeholder="Password" class="border p-2 mr-2" />
-      <select v-model="form.role" class="border p-2 mr-2">
-        <option disabled value="">Select role</option>
-        <option value="admin">Admin</option>
-        <option value="trainer">Trainer</option>
-        <option value="member">Member</option>
-      </select>
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
-        {{ form.id ? 'Update' : 'Add' }}
-      </button>
+    <!-- Search -->
+    <input v-model="search" @input="fetchUsers" type="text"
+           placeholder="🔍 Search users..."
+           class="border p-2 mb-4 w-full rounded" />
+
+    <!-- Add/Edit Form -->
+    <form @submit.prevent="saveUser" class="mb-6 bg-gray-100 p-4 rounded shadow">
+      <div class="flex gap-2">
+        <input v-model="form.name" type="text" placeholder="Name" class="border p-2 flex-1 rounded" />
+        <input v-model="form.email" type="email" placeholder="Email" class="border p-2 flex-1 rounded" />
+        <input v-model="form.password" type="password" placeholder="Password" class="border p-2 flex-1 rounded" />
+        <select v-model="form.role" class="border p-2 flex-1 rounded">
+          <option disabled value="">Select role</option>
+          <option value="admin">Admin</option>
+          <option value="trainer">Trainer</option>
+          <option value="member">Member</option>
+        </select>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
+          {{ form.id ? 'Update' : 'Add' }}
+        </button>
+      </div>
     </form>
 
     <!-- Users Table -->
-    <table class="w-full border">
-      <thead>
-        <tr class="bg-gray-200">
-          <th class="p-2 border">Name</th>
-          <th class="p-2 border">Email</th>
-          <th class="p-2 border">Role</th>
-          <th class="p-2 border">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="user in users" :key="user.id">
-          <td class="p-2 border">{{ user.name }}</td>
-          <td class="p-2 border">{{ user.email }}</td>
-          <td class="p-2 border">{{ user.roles?.[0]?.name || 'N/A' }}</td>
-          <td class="p-2 border">
-            <button @click="editUser(user)" class="bg-yellow-500 text-white px-2 py-1 mr-2">Edit</button>
-            <button @click="deleteUser(user.id)" class="bg-red-600 text-white px-2 py-1">Delete</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="overflow-x-auto bg-white rounded shadow">
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="bg-gray-200 text-left">
+            <th class="p-2 border">Name</th>
+            <th class="p-2 border">Email</th>
+            <th class="p-2 border">Role</th>
+            <th class="p-2 border text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="user in users.data" :key="user.id" class="hover:bg-gray-50">
+            <td class="p-2 border">{{ user.name }}</td>
+            <td class="p-2 border">{{ user.email }}</td>
+            <td class="p-2 border">
+              <span class="px-2 py-1 text-sm rounded bg-green-100 text-green-700">
+                {{ user.roles?.[0]?.name || 'N/A' }}
+              </span>
+            </td>
+            <td class="p-2 border text-center">
+              <button @click="editUser(user)" class="text-blue-600 hover:underline">✏️</button>
+              <button @click="deleteUser(user.id)" class="text-red-600 hover:underline ml-2">🗑</button>
+            </td>
+          </tr>
+          <tr v-if="!users.data.length">
+            <td colspan="4" class="p-3 text-center text-gray-500">No users found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-between items-center mt-4">
+      <button :disabled="!users.prev_page_url" @click="fetchUsers(users.current_page - 1)"
+              class="px-3 py-1 bg-gray-200 rounded disabled:opacity-50">⬅ Prev</button>
+      <span>Page {{ users.current_page }} of {{ users.last_page }}</span>
+      <button :disabled="!users.next_page_url" @click="fetchUsers(users.current_page + 1)"
+              class="px-3 py-1 bg-gray-200 rounded disabled:opacity-50">Next ➡</button>
+    </div>
   </AppLayout>
 </template>
 
@@ -48,32 +73,30 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 import AppLayout from "@/Layouts/AppLayout.vue";
 
-const users = ref([]);
+const users = ref({ data: [] });
 const form = ref({ id: null, name: "", email: "", password: "", role: "" });
+const search = ref("");
 
-const fetchUsers = async () => {
-  const res = await axios.get("/api/admin/users", {
+const fetchUsers = async (page = 1) => {
+  const res = await axios.get(`/api/admin/users?page=${page}&search=${search.value}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
   });
   users.value = res.data;
 };
 
 const saveUser = async () => {
-  try {
-    if (form.value.id) {
-      await axios.put(`/api/admin/users/${form.value.id}`, form.value, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-    } else {
-      await axios.post("/api/admin/users", form.value, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-    }
-    form.value = { id: null, name: "", email: "", password: "", role: "" };
-    fetchUsers();
-  } catch (e) {
-    console.error(e);
-  }
+  const endpoint = form.value.id
+    ? `/api/admin/users/${form.value.id}`
+    : `/api/admin/users`;
+
+  const method = form.value.id ? "put" : "post";
+
+  await axios[method](endpoint, form.value, {
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+  });
+
+  form.value = { id: null, name: "", email: "", password: "", role: "" };
+  fetchUsers();
 };
 
 const editUser = (user) => {
