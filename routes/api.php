@@ -7,6 +7,10 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\{
     UserController, PlanController, SubscriptionController, AttendanceController, PageController
 };
+
+Route::post('/auth/register',[AuthController::class,'register']);
+
+Route::post('/auth/login', [AuthController::class, 'login']);
 Route::middleware(['auth:sanctum', 'rolecheck:admin'])->prefix('admin')->group(function () {
     Route::apiResource('users', UserController::class);
     Route::apiResource('plans', PlanController::class);
