@@ -1,5 +1,5 @@
 <script setup>
-import { authStore } from "@/store/auth";
+import { authStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -12,7 +12,7 @@ const logout = () => {
 
 <template>
   <div id="layout">
-    <header class="p-4 bg-gray-800 text-white flex justify-between">
+    <!-- <header class="p-4 bg-gray-800 text-white flex justify-between">
       <h1 class="font-bold">🏋️ Gym Management</h1>
 
       <nav v-if="!authStore.token">
@@ -29,7 +29,7 @@ const logout = () => {
           Logout
         </button>
       </nav>
-    </header>
+    </header> -->
 
     <main class="p-6">
       <router-view />
