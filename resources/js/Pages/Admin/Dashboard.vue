@@ -24,11 +24,6 @@
           <h2 class="font-semibold text-lg">📝 Attendance</h2>
           <p class="text-gray-500 text-sm">Track who is coming in/out.</p>
         </router-link>
-
-        <router-link to="/admin/pages" class="block bg-white shadow rounded-lg p-6 hover:shadow-md">
-          <h2 class="font-semibold text-lg">📄 Pages</h2>
-          <p class="text-gray-500 text-sm">Manage CMS content pages.</p>
-        </router-link>
       </div>
     </div>
   </AppLayout>
